@@ -1,68 +1,60 @@
 {
-    "name": "create pulsar pay 2",
-    "steps": [
-        {
-            "step": "externalSteps",
-            "path": "steps/init.steps.json"
-        },
-        {
-            "step": "externalSteps",
-            "path": "steps/create-pulsar-pay-2.steps.json"
-        },
-        {
-            "step": "checkState",
-            "accounts": {
-                "sc:contract": {
-                    "nonce": "0",
-                    "balance": "997,998",
-                    "code": "file:../output/pulsar-payment-contract.wasm",
-                    "esdt": {
-                        "str:ASTRAPAY-123456": {
-                            "lastNonce": "1",
-                            "roles": [
-                                "ESDTRoleNFTCreate",
-                                "ESDTRoleNFTAddQuantity",
-                                "ESDTRoleNFTBurn"
-                            ]
-                        },
-                        "str:ASTRACAN-123456": {
-                            "lastNonce": "0",
-                            "roles": [
-                                "ESDTRoleNFTCreate",
-                                "ESDTRoleNFTAddQuantity",
-                                "ESDTRoleNFTBurn"
-                            ]
-                        }
-                    },
-                    "storage": {
-                        "str:schedule_token_id": "str:ASTRAPAY-123456",
-                        "str:cancel_token_id": "str:ASTRACAN-123456",
-                        "str:fee": "2",
-                        "str:last_id": "101"
-                    }
-                },
-                "address:owner": {
-                    "nonce": "1",
-                    "balance": "2002"
-                },
-                "address:acc1": {
-                    "nonce": "1",
-                    "balance": "9,999,000,000",
-                    "storage": {}
-                },
-                "address:acc2": {
-                    "nonce": "0",
-                    "balance": "10,000,000,000",
-                    "storage": {},
-                    "esdt": {
-                        "str:ASTRAPAY-123456": {
-                            "nonce": "1",
-                            "balance": "1,000"
-                        }
-                    }
-                },
-                "+": ""
-            }
-        }
-    ]
+	"name": "create pulsar pay 2",
+	"steps": [
+		{
+			"step": "externalSteps",
+			"path": "steps/init.steps.json"
+		},
+		{
+			"step": "externalSteps",
+			"path": "steps/create-pulsar-pay-2.steps.json"
+		},
+		{
+			"step": "checkState",
+			"accounts": {
+				"sc:contract": {
+					"nonce": "0",
+					"balance": "997,998",
+					"code": "file:../output/pulsar-contract.wasm",
+					"esdt": {
+						"str:ASTRAPAY-123456": {
+							"lastNonce": "1",
+							"roles": ["ESDTRoleNFTCreate", "ESDTRoleNFTAddQuantity", "ESDTRoleNFTBurn"]
+						},
+						"str:ASTRACAN-123456": {
+							"lastNonce": "0",
+							"roles": ["ESDTRoleNFTCreate", "ESDTRoleNFTAddQuantity", "ESDTRoleNFTBurn"]
+						}
+					},
+					"storage": {
+						"str:schedule_token_id": "str:ASTRAPAY-123456",
+						"str:cancel_token_id": "str:ASTRACAN-123456",
+						"str:fee": "2",
+						"str:last_id": "101"
+					}
+				},
+				"address:owner": {
+					"nonce": "1",
+					"balance": "2002"
+				},
+				"address:acc1": {
+					"nonce": "1",
+					"balance": "9,999,000,000",
+					"storage": {}
+				},
+				"address:acc2": {
+					"nonce": "0",
+					"balance": "10,000,000,000",
+					"storage": {},
+					"esdt": {
+						"str:ASTRAPAY-123456": {
+							"nonce": "1",
+							"balance": "1,000"
+						}
+					}
+				},
+				"+": ""
+			}
+		}
+	]
 }

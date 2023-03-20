@@ -1,156 +1,148 @@
 {
-    "name": "create pulsar pay 1",
-    "steps": [
-        {
-            "step": "externalSteps",
-            "path": "steps/init.steps.json"
-        },
-        {
-            "step": "externalSteps",
-            "path": "steps/create-vesting-2.steps.json"
-        },
-        {
-            "step": "setState",
-            "currentBlockInfo": {
-                "blockTimestamp": "102,000"
-            }
-        },
-        {
-            "step": "scCall",
-            "id": "claim-1",
-            "tx": {
-                "from": "address:acc2",
-                "to": "sc:contract",
-                "esdtValue": [
-                    {
-                        "tokenIdentifier": "str:ASTRAPAY-123456",
-                        "nonce": "1",
-                        "value": "1,000"
-                    }
-                ],
-                "function": "claim",
-                "arguments": [],
-                "gasLimit": "20,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "out": [],
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "id": "claim-2",
-            "tx": {
-                "from": "address:acc3",
-                "to": "sc:contract",
-                "esdtValue": [
-                    {
-                        "tokenIdentifier": "str:ASTRAPAY-123456",
-                        "nonce": "2",
-                        "value": "1,000"
-                    }
-                ],
-                "function": "claim",
-                "arguments": [],
-                "gasLimit": "20,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "out": [],
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "checkState",
-            "accounts": {
-                "sc:contract": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "code": "file:../output/pulsar-payment-contract.wasm",
-                    "esdt": {
-                        "str:ASTRAPAY-123456": {
-                            "lastNonce": "2",
-                            "roles": [
-                                "ESDTRoleNFTCreate",
-                                "ESDTRoleNFTAddQuantity",
-                                "ESDTRoleNFTBurn"
-                            ]
-                        },
-                        "str:ASTRACAN-123456": {
-                            "lastNonce": "2",
-                            "roles": [
-                                "ESDTRoleNFTCreate",
-                                "ESDTRoleNFTAddQuantity",
-                                "ESDTRoleNFTBurn"
-                            ]
-                        }
-                    },
-                    "storage": {
-                        "str:schedule_token_id": "str:ASTRAPAY-123456",
-                        "str:cancel_token_id": "str:ASTRACAN-123456",
-                        "str:fee": "2",
-                        "str:last_id": "102"
-                    }
-                },
-                "address:owner": {
-                    "nonce": "1",
-                    "esdt": {
-                        "str:USDC-123456": {
-                            "balance": "6,000,000"
-                        }
-                    }
-                },
-                "address:acc2": {
-                    "nonce": "1",
-                    "balance": "10,000,000,000",
-                    "storage": {},
-                    "esdt": {
-                        "str:USDC-123456": {
-                            "balance": "1,497,000,000"
-                        }
-                    }
-                },
-                "address:acc3": {
-                    "nonce": "1",
-                    "balance": "10,000,000,000",
-                    "storage": {},
-                    "esdt": {
-                        "str:USDC-123456": {
-                            "balance": "1,497,000,000"
-                        }
-                    }
-                },
-                "address:acc4": {
-                    "nonce": "1",
-                    "balance": "10,000,000,000",
-                    "storage": {},
-                    "esdt": {
-                        "str:USDC-123456": {
-                            "balance": "7,000,000,000"
-                        },
-                        "str:ASTRACAN-123456": {
-                            "instances": [
-                                {
-                                    "nonce": "1",
-                                    "balance": "1"
-                                },
-                                {
-                                    "nonce": "2",
-                                    "balance": "1"
-                                }
-                            ]
-                        }
-                    }
-                },
-                "+": ""
-            }
-        }
-    ]
+	"name": "create pulsar pay 1",
+	"steps": [
+		{
+			"step": "externalSteps",
+			"path": "steps/init.steps.json"
+		},
+		{
+			"step": "externalSteps",
+			"path": "steps/create-vesting-2.steps.json"
+		},
+		{
+			"step": "setState",
+			"currentBlockInfo": {
+				"blockTimestamp": "102,000"
+			}
+		},
+		{
+			"step": "scCall",
+			"id": "claim-1",
+			"tx": {
+				"from": "address:acc2",
+				"to": "sc:contract",
+				"esdtValue": [
+					{
+						"tokenIdentifier": "str:ASTRAPAY-123456",
+						"nonce": "1",
+						"value": "1,000"
+					}
+				],
+				"function": "claim",
+				"arguments": [],
+				"gasLimit": "20,000,000",
+				"gasPrice": "0"
+			},
+			"expect": {
+				"out": [],
+				"status": "0",
+				"message": "",
+				"gas": "*",
+				"refund": "*"
+			}
+		},
+		{
+			"step": "scCall",
+			"id": "claim-2",
+			"tx": {
+				"from": "address:acc3",
+				"to": "sc:contract",
+				"esdtValue": [
+					{
+						"tokenIdentifier": "str:ASTRAPAY-123456",
+						"nonce": "2",
+						"value": "1,000"
+					}
+				],
+				"function": "claim",
+				"arguments": [],
+				"gasLimit": "20,000,000",
+				"gasPrice": "0"
+			},
+			"expect": {
+				"out": [],
+				"status": "0",
+				"message": "",
+				"gas": "*",
+				"refund": "*"
+			}
+		},
+		{
+			"step": "checkState",
+			"accounts": {
+				"sc:contract": {
+					"nonce": "0",
+					"balance": "0",
+					"code": "file:../output/pulsar-contract.wasm",
+					"esdt": {
+						"str:ASTRAPAY-123456": {
+							"lastNonce": "2",
+							"roles": ["ESDTRoleNFTCreate", "ESDTRoleNFTAddQuantity", "ESDTRoleNFTBurn"]
+						},
+						"str:ASTRACAN-123456": {
+							"lastNonce": "2",
+							"roles": ["ESDTRoleNFTCreate", "ESDTRoleNFTAddQuantity", "ESDTRoleNFTBurn"]
+						}
+					},
+					"storage": {
+						"str:schedule_token_id": "str:ASTRAPAY-123456",
+						"str:cancel_token_id": "str:ASTRACAN-123456",
+						"str:fee": "2",
+						"str:last_id": "102"
+					}
+				},
+				"address:owner": {
+					"nonce": "1",
+					"esdt": {
+						"str:USDC-123456": {
+							"balance": "6,000,000"
+						}
+					}
+				},
+				"address:acc2": {
+					"nonce": "1",
+					"balance": "10,000,000,000",
+					"storage": {},
+					"esdt": {
+						"str:USDC-123456": {
+							"balance": "1,497,000,000"
+						}
+					}
+				},
+				"address:acc3": {
+					"nonce": "1",
+					"balance": "10,000,000,000",
+					"storage": {},
+					"esdt": {
+						"str:USDC-123456": {
+							"balance": "1,497,000,000"
+						}
+					}
+				},
+				"address:acc4": {
+					"nonce": "1",
+					"balance": "10,000,000,000",
+					"storage": {},
+					"esdt": {
+						"str:USDC-123456": {
+							"balance": "7,000,000,000"
+						},
+						"str:ASTRACAN-123456": {
+							"instances": [
+								{
+									"nonce": "1",
+									"balance": "1"
+								},
+								{
+									"nonce": "2",
+									"balance": "1"
+								}
+							]
+						}
+					}
+				},
+				"+": ""
+			}
+		}
+	]
 }
