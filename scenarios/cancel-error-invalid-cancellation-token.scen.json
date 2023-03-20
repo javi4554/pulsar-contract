@@ -1,0 +1,39 @@
+{
+    "name": "create end date earlier than start date",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "steps/init.steps.json"
+        },
+        {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockTimestamp": "100,000"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "create-simple",
+            "tx": {
+                "from": "address:acc4",
+                "to": "sc:contract",
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:USDC-123456",
+                        "value": "1,000,000,000"
+                    }
+                ],
+                "function": "cancel",
+                "gasLimit": "20,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "4",
+                "message": "str:Invalid cancellation token!",
+                "gas": "*",
+                "refund": "*"
+            }
+        }
+    ]
+}

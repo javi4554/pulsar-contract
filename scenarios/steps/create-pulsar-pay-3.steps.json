@@ -1,0 +1,31 @@
+{
+    "name": "create pulsar pay 3",
+    "steps": [
+        {
+            "step": "scCall",
+            "id": "create-simple",
+            "tx": {
+                "from": "address:acc1",
+                "to": "sc:contract",
+                "egldValue": "1,000,000,000",
+                "function": "create",
+                "arguments": [
+                    "0",
+                    "str:Hello World",
+                    "0",
+                    "address:acc2",
+                    "u64:100,001|u64:101,001|u64:500|biguint:1,000,000,000"
+                ],
+                "gasLimit": "20,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        }
+    ]
+}

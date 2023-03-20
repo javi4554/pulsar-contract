@@ -1,0 +1,41 @@
+{
+    "name": "create end date earlier than start date",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "steps/init.steps.json"
+        },
+        {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockTimestamp": "100,000"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "create-simple",
+            "tx": {
+                "from": "address:acc1",
+                "to": "sc:contract",
+                "egldValue": "1,000,000",
+                "function": "create",
+                "arguments": [
+                    "0",
+                    "str:Hello World",
+                    "0",
+                    "address:acc2",
+                    "u64:100,000|u64:99,000|u64:1|biguint:1,000,000"
+                ],
+                "gasLimit": "20,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "4",
+                "message": "str:End date should not be at an earlier point than start date!",
+                "gas": "*",
+                "refund": "*"
+            }
+        }
+    ]
+}

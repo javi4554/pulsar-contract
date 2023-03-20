@@ -1,0 +1,106 @@
+{
+    "name": "create pulsar pay 1",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "steps/init.steps.json"
+        },
+        {
+            "step": "externalSteps",
+            "path": "steps/create-vesting-3.steps.json"
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "sc:contract": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "code": "file:../output/pulsar-payment-contract.wasm",
+                    "esdt": {
+                        "str:ASTRAPAY-123456": {
+                            "lastNonce": "2",
+                            "roles": [
+                                "ESDTRoleNFTCreate",
+                                "ESDTRoleNFTAddQuantity",
+                                "ESDTRoleNFTBurn"
+                            ]
+                        },
+                        "str:ASTRACAN-123456": {
+                            "lastNonce": "2",
+                            "roles": [
+                                "ESDTRoleNFTCreate",
+                                "ESDTRoleNFTAddQuantity",
+                                "ESDTRoleNFTBurn"
+                            ]
+                        },
+                        "str:LKMEX-123456": {
+                            "balance": "2,994,000,000",
+                            "nonce": "999"
+                        }
+                    },
+                    "storage": {
+                        "str:schedule_token_id": "str:ASTRAPAY-123456",
+                        "str:cancel_token_id": "str:ASTRACAN-123456",
+                        "str:fee": "2",
+                        "str:last_id": "102"
+                    }
+                },
+                "address:owner": {
+                    "nonce": "1",
+                    "esdt": {
+                        "str:LKMEX-123456": {
+                            "balance": "6,000,000",
+                            "nonce": "999"
+                        }
+                    }
+                },
+                "address:acc2": {
+                    "nonce": "0",
+                    "balance": "10,000,000,000",
+                    "storage": {},
+                    "esdt": {
+                        "str:ASTRAPAY-123456": {
+                            "nonce": "1",
+                            "balance": "1,000"
+                        }
+                    }
+                },
+                "address:acc3": {
+                    "nonce": "0",
+                    "balance": "10,000,000,000",
+                    "storage": {},
+                    "esdt": {
+                        "str:ASTRAPAY-123456": {
+                            "nonce": "2",
+                            "balance": "1,000"
+                        }
+                    }
+                },
+                "address:acc5": {
+                    "nonce": "1",
+                    "balance": "10,000,000,000",
+                    "storage": {},
+                    "esdt": {
+                        "str:LKMEX-123456": {
+                            "balance": "7,000,000,000",
+                            "nonce": "999"
+                        },
+                        "str:ASTRACAN-123456": {
+                            "instances": [
+                                {
+                                    "nonce": "1",
+                                    "balance": "1"
+                                },
+                                {
+                                    "nonce": "2",
+                                    "balance": "1"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "+": ""
+            }
+        }
+    ]
+}
