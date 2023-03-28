@@ -5,4 +5,4 @@ Cargo.lock
 
 **/*.rs.bk
 output/
-/meta/target/debug
+/meta/target
