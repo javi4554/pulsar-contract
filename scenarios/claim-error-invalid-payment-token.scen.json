@@ -30,7 +30,7 @@
             "expect": {
                 "out": [],
                 "status": "4",
-                "message": "str:Invalid schedule token!",
+                "message": "str:Invalid payment token!",
                 "gas": "*",
                 "refund": "*"
             }

@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                            8
+// Endpoints:                            6
 // Async Callback (empty):               1
-// Total number of exported functions:  10
+// Total number of exported functions:   8
 
 #![no_std]
 #![feature(alloc_error_handler, lang_items)]
@@ -20,10 +20,8 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         create
         claim
-        getClaimableAmount
-        isCancelled
         cancel
-        getScheduleTokenId
+        getPaymentTokenId
         getCancelTokenId
         getFee
     )

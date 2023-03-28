@@ -3,22 +3,22 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 mod cancellation;
-mod schedule;
-mod schedule_release;
-mod schedule_type;
+mod payment;
+mod release;
+mod payment_type;
 
 use cancellation::Cancellation;
-use schedule::Schedule;
-use schedule_type::ScheduleType;
-use schedule_release::ScheduleRelease;
+use payment::Payment;
+use payment_type::PaymentType;
+use release::Release;
 
-const ONE_SCHEDULE_TOKEN: u64 = 1_000u64;
+const ONE_PAYMENT_TOKEN: u64 = 1_000u64;
 
 #[multiversx_sc::derive::contract]
 pub trait PulsarPayment {
     #[init]
-    fn init(&self, schedule_token_id: TokenIdentifier, cancel_token_id: TokenIdentifier, fee: u64) {
-        self.schedule_token_id().set(&schedule_token_id);
+    fn init(&self, payment_token_id: TokenIdentifier, cancel_token_id: TokenIdentifier, fee: u64) {
+        self.payment_token_id().set(&payment_token_id);
         self.cancel_token_id().set(&cancel_token_id);
         self.fee().set(fee);
     }
@@ -27,16 +27,16 @@ pub trait PulsarPayment {
     #[payable("*")]
     fn create(
         &self,
-        schedule_type: ScheduleType, // 0 vault; 1 pulsar pay; 2 vesting
+        payment_type: PaymentType, // 0 vault; 1 pulsar pay; 2 vesting
         name: ManagedBuffer,
         cancelable: bool,
         receivers: ManagedVec<ManagedAddress>,
-        releases: MultiValueEncoded<ScheduleRelease<Self::Api>>,
-        #[payment_token] payment_token: EgldOrEsdtTokenIdentifier, 
-        #[payment_nonce] payment_nonce: u64,
-        #[payment_amount] payment_amount: BigUint,
+        releases: MultiValueEncoded<Release<Self::Api>>,
+        #[payment_token] token: EgldOrEsdtTokenIdentifier, 
+        #[payment_nonce] nonce: u64,
+        #[payment_amount] amount: BigUint,
     ) {
-        let mut schedule_releases = ManagedVec::new();
+        let mut payment_releases = ManagedVec::new();
         let mut total_amount = BigUint::zero();
         let mut total_amount_post_tax = BigUint::zero();
 
@@ -48,51 +48,55 @@ pub trait PulsarPayment {
 
         for release_request in releases {
             require!(release_request.end_date > release_request.start_date, "End date should not be at an earlier point than start date!");
-            require!((1..=365 * 24 * 60 * 60).contains(&release_request.duration), "Not a valid interval duration!");
+            require!((1..=365 * 24 * 60 * 60).contains(&release_request.interval_seconds), "Not a valid interval duration!");
             require!(release_request.start_date >= self.blockchain().get_block_timestamp(), "Start date should not be in the past!");
-            require!((release_request.end_date - release_request.start_date) % release_request.duration == 0, "Interval duration must be a multiple of the difference between end_date and start_date!");
+            require!((release_request.end_date - release_request.start_date) % release_request.interval_seconds == 0, "Interval duration must be a multiple of the difference between end_date and start_date!");
 
             let amount_post_tax = release_request.amount.clone() * (BigUint::from(1000u64 - self.fee().get())) / BigUint::from(1000u64);
-            let duration = BigUint::from(release_request.end_date - release_request.start_date);
-            let amount_per_interval = amount_post_tax / duration.clone() / BigUint::from(receivers.len()) * release_request.duration;
+            let interval_seconds = BigUint::from(release_request.end_date - release_request.start_date);
+            let amount_per_interval = amount_post_tax / interval_seconds.clone() / BigUint::from(receivers.len()) * release_request.interval_seconds;
             require!(amount_per_interval > 100000, "Minimum rate not reached. Please increase interval duration!");
 
-            let amount_post_tax_calculated = amount_per_interval.clone() * duration * BigUint::from(receivers.len()) / release_request.duration;
+            let amount_post_tax_calculated = amount_per_interval.clone() * interval_seconds * BigUint::from(receivers.len()) / release_request.interval_seconds;
             
             total_amount += release_request.amount.clone();
             total_amount_post_tax += amount_post_tax_calculated.clone();
 
-            schedule_releases.push(ScheduleRelease {
+            payment_releases.push(Release {
                 amount: amount_per_interval.clone(),
                 start_date: release_request.start_date,
                 end_date: release_request.end_date,
-                duration: release_request.duration,
+                interval_seconds: release_request.interval_seconds,
             });
         }
 
-        require!(payment_amount == total_amount, "Total release amount does not match transaction amount!");
+        require!(amount == total_amount, "Total release amount does not match transaction amount!");
 
-        let tax = payment_amount - total_amount_post_tax; 
+        let tax = amount - total_amount_post_tax.clone(); 
 
-        self.pay_egld_esdt(payment_token.clone(), payment_nonce, self.blockchain().get_owner_address(), tax);
+        self.pay_egld_esdt(token.clone(), nonce, self.blockchain().get_owner_address(), tax);
 
         for receiver in &receivers {  
             let identifier = self.increment_last_id();
-            let schedule = Schedule {
-                schedule_type, 
-                release_token: payment_token.clone(), 
-                release_nonce: payment_nonce,
+            let payment = Payment {
+                version: 2u8,
+                payment_type, 
+                identifier, 
+                name: name.clone(), 
                 start_date,
                 end_date,
-                name: name.clone(), 
-                releases: schedule_releases.clone(),
-                identifier, 
+                release_token: token.clone(), 
+                release_nonce: nonce,
+                creator: self.blockchain().get_caller().clone(),
+                amount: total_amount_post_tax.clone(),
+                cancelable,
+                releases: payment_releases.clone(),
             };
 
-            self.create_and_send(self.schedule_token_id().get(), BigUint::from(ONE_SCHEDULE_TOKEN), schedule, receiver);
+            self.create_and_send(self.payment_token_id().get(), BigUint::from(ONE_PAYMENT_TOKEN), payment, receiver);
 
             if cancelable {
-                let cancellation = Cancellation { schedule_identifier: identifier, release_token: payment_token.clone(), release_nonce: payment_nonce, releases: schedule_releases.clone() };
+                let cancellation = Cancellation { payment_identifier: identifier, release_token: token.clone(), release_nonce: nonce, releases: payment_releases.clone() };
                 self.create_and_send(self.cancel_token_id().get(), BigUint::from(1u64), cancellation, self.blockchain().get_caller().clone());
             }
         }
@@ -109,28 +113,28 @@ pub trait PulsarPayment {
     #[payable("*")]
     fn claim(&self) {
         let payments = self.call_value().all_esdt_transfers();
-        self.verify_schedule_token_payments(&payments);
+        self.verify_payment_token_payments(&payments);
 
         for payment in &payments {
-            self.claim_schedule(payment.token_identifier, payment.token_nonce, payment.amount);
+            self.claim_payment(payment.token_identifier, payment.token_nonce, payment.amount);
         }
     }
 
-    fn verify_schedule_token_payments(&self, payments: &ManagedVec<EsdtTokenPayment<Self::Api>>) {
-        let schedule_token_id = self.schedule_token_id().get();
+    fn verify_payment_token_payments(&self, payments: &ManagedVec<EsdtTokenPayment<Self::Api>>) {
+        let payment_token_id = self.payment_token_id().get();
 
         for payment in payments {
-            require!(payment.token_identifier == schedule_token_id, "Invalid schedule token!");
+            require!(payment.token_identifier == payment_token_id, "Invalid payment token!");
         }
     }
    
-    fn claim_schedule(&self, payment_token: TokenIdentifier, payment_nonce: u64, payment_amount: BigUint) {
-        let schedule = self.decode_token_attributes::<Schedule<Self::Api>>(&payment_token, payment_nonce);
+    fn claim_payment(&self, token: TokenIdentifier, nonce: u64, amount: BigUint) {
+        let payment = self.decode_token_attributes::<Payment<Self::Api>>(&token, nonce);
 
         let mut releases = ManagedVec::new();
 
-        for release in &schedule.releases {
-            let claim_release_result = self.claim_release(release, payment_amount.clone(), schedule.identifier, schedule.release_token.clone(), schedule.release_nonce);
+        for release in &payment.releases {
+            let claim_release_result = self.claim_release(release, amount.clone(), payment.identifier, payment.release_token.clone(), payment.release_nonce);
 
             match claim_release_result {
                 OptionalValue::Some(release) => {
@@ -140,89 +144,38 @@ pub trait PulsarPayment {
             };
         }
 
-        self.send().esdt_local_burn(&payment_token, payment_nonce, &payment_amount);
+        self.send().esdt_local_burn(&token, nonce, &amount);
 
         if !releases.is_empty() {
-            let schedule_attributes = Schedule {
-                schedule_type: schedule.schedule_type, 
-                release_token: schedule.release_token,
-                release_nonce: schedule.release_nonce,
-                start_date: schedule.start_date,
-                end_date: schedule.end_date,
-                identifier: schedule.identifier, 
-                name: schedule.name, 
+            let payment_attributes = Payment {
+                version: payment.version,
+                payment_type: payment.payment_type, 
+                identifier: payment.identifier, 
+                name: payment.name, 
+                start_date: payment.start_date,
+                end_date: payment.end_date,
+                release_token: payment.release_token,
+                release_nonce: payment.release_nonce,
+                creator: payment.creator,
+                amount: payment.amount,
+                cancelable: payment.cancelable,
                 releases
             };
     
-            self.create_and_send(self.schedule_token_id().get(), payment_amount, schedule_attributes, self.blockchain().get_caller());
+            self.create_and_send(self.payment_token_id().get(), amount, payment_attributes, self.blockchain().get_caller());
         }
     }
    
     fn claim_release(
-        &self, release: ScheduleRelease<Self::Api>, amount: BigUint, identifier: u64, schedule_token: EgldOrEsdtTokenIdentifier, schedule_nonce: u64,
-    ) -> OptionalValue<ScheduleRelease<Self::Api>> {
-        let current_date = self.blockchain().get_block_timestamp();
-        let cancel_date = self.cancel_list(identifier).get();
-
-        match self.get_claimable_amount_for_release(cancel_date, amount, release.clone()) {
-            OptionalValue::Some(claimable_amount) => {
-                if claimable_amount > 0 {
-                    self.pay_egld_esdt(schedule_token, schedule_nonce, self.blockchain().get_caller(), claimable_amount);
-                }
-            },
-            OptionalValue::None => {
-                return OptionalValue::None;
-            }
-        };
-
-        if cancel_date == 0 && current_date < release.end_date {
-            let release_attributes = ScheduleRelease {
-                amount: release.amount,
-                start_date: current_date - ((current_date - release.start_date) % release.duration), 
-                end_date: release.end_date, 
-                duration: release.duration, 
-            };
-
-            return OptionalValue::Some(release_attributes);
-        }
-
-        OptionalValue::None
-    }
-
-    #[view(getClaimableAmount)]
-    fn get_claimable_amount(
         &self,
+        release: Release<Self::Api>,
+        amount: BigUint,
         identifier: u64,
-        amount: BigUint,
-        releases: ManagedVec<ScheduleRelease<Self::Api>>
-    ) -> BigUint {
-        let mut claimable_amount = BigUint::zero();
-        let cancel_date = self.cancel_list(identifier).get();
-
-        for release in &releases {
-            match self.get_claimable_amount_for_release(cancel_date, amount.clone(), release.clone()) {
-                OptionalValue::Some(claimable_amount_for_release) => {
-                    claimable_amount += claimable_amount_for_release;
-                },
-                OptionalValue::None => {}
-            };
-        }
-
-        claimable_amount
-    }
-
-    #[view(isCancelled)]
-    fn is_cancelled(&self, identifier: u64) -> bool {
-        self.cancel_list(identifier).get() > 0
-    }
-
-    fn get_claimable_amount_for_release(
-        &self,
-        cancel_date: u64,
-        amount: BigUint,
-        release: ScheduleRelease<Self::Api>,
-    ) -> OptionalValue<BigUint> {
+        payment_token: EgldOrEsdtTokenIdentifier,
+        payment_nonce: u64,
+    ) -> OptionalValue<Release<Self::Api>> {
         let current_date = self.blockchain().get_block_timestamp();
+        let cancel_date = self.cancel_list(identifier).get();
 
         if current_date <= release.start_date {
             // if cancelled and start is in the future, no need to include it in the release list
@@ -230,19 +183,32 @@ pub trait PulsarPayment {
                 return OptionalValue::None;
             }
 
-            return OptionalValue::Some(BigUint::zero());
+            return OptionalValue::Some(release);
         }
 
         let release_end: u64 = *[current_date, release.end_date, cancel_date].iter().filter(|v| *v > &0u64).min().unwrap();
-        let claimable_intervals = (release_end - release.start_date) / release.duration;
+        let claimable_intervals = (release_end - release.start_date) / release.interval_seconds;
 
         if claimable_intervals == 0 {
-            return OptionalValue::Some(BigUint::zero());
+            return OptionalValue::Some(release);
         }
 
-        let claimable_amount = amount * claimable_intervals * release.amount.clone() / BigUint::from(ONE_SCHEDULE_TOKEN);
+        let claimable_amount = amount * claimable_intervals * release.amount.clone() / BigUint::from(ONE_PAYMENT_TOKEN);
 
-        OptionalValue::Some(claimable_amount)
+        self.pay_egld_esdt(payment_token, payment_nonce, self.blockchain().get_caller(), claimable_amount);
+    
+        if cancel_date == 0 && current_date < release.end_date {
+            let release_attributes = Release {
+                amount: release.amount,
+                start_date: current_date - ((current_date - release.start_date) % release.interval_seconds), 
+                end_date: release.end_date, 
+                interval_seconds: release.interval_seconds, 
+            };
+
+            return OptionalValue::Some(release_attributes);
+        }
+
+        OptionalValue::None
     }
 
     #[endpoint(cancel)]
@@ -264,23 +230,23 @@ pub trait PulsarPayment {
         }
     }
 
-    fn cancel_internal(&self, payment_token: TokenIdentifier, payment_nonce: u64, payment_amount: BigUint) {
-        let cancellation = self.decode_token_attributes::<Cancellation<Self::Api>>(&payment_token, payment_nonce);
+    fn cancel_internal(&self, token: TokenIdentifier, nonce: u64, amount: BigUint) {
+        let cancellation = self.decode_token_attributes::<Cancellation<Self::Api>>(&token, nonce);
         let current_date = self.blockchain().get_block_timestamp();
 
-        self.cancel_list(cancellation.schedule_identifier).set(current_date); //vesting/payment
+        self.cancel_list(cancellation.payment_identifier).set(current_date); //vesting/payment
 
         for release in &cancellation.releases {
             if current_date < release.end_date { //token still active 
-                let current_date_in_interval = current_date - ((current_date - release.start_date) % release.duration);
+                let current_date_in_interval = current_date - ((current_date - release.start_date) % release.interval_seconds);
                 let start_date = if current_date_in_interval > release.start_date {current_date_in_interval} else {release.start_date};
                 let remaining_time = release.end_date - start_date;
-                let remaining_amount = release.amount.clone() * BigUint::from(remaining_time) / BigUint::from(release.duration);
+                let remaining_amount = release.amount.clone() * BigUint::from(remaining_time) / BigUint::from(release.interval_seconds);
                 self.pay_egld_esdt(cancellation.release_token.clone(), cancellation.release_nonce, self.blockchain().get_caller(), remaining_amount);
             }
         }
 
-        self.send().esdt_local_burn(&payment_token, payment_nonce, &payment_amount); 
+        self.send().esdt_local_burn(&token, nonce, &amount); 
     }
 
     fn decode_token_attributes<T: TopDecode>( &self, token_id: &TokenIdentifier, token_nonce: u64) -> T {
@@ -288,7 +254,12 @@ pub trait PulsarPayment {
         self.serializer().top_decode_from_managed_buffer::<T>(&token_info.attributes)
     }
 
-    fn create_and_send<T: TopEncode>(&self, token_id: TokenIdentifier, amount: BigUint, attributes: T, receiver: ManagedAddress) -> u64 {
+    fn create_and_send<T: TopEncode>(&self,
+        token_id: TokenIdentifier,
+        amount: BigUint,
+        attributes: T,
+        receiver: ManagedAddress
+    ) -> u64 {
         let token_nonce = self.send().esdt_nft_create_compact(&token_id, &amount, &attributes);
         self.send().direct_esdt(&receiver, &token_id, token_nonce, &amount);
         token_nonce
@@ -302,9 +273,9 @@ pub trait PulsarPayment {
         }
     }
 
-    #[view(getScheduleTokenId)]
-    #[storage_mapper("schedule_token_id")]
-    fn schedule_token_id(&self) -> SingleValueMapper<TokenIdentifier>; 
+    #[view(getPaymentTokenId)]
+    #[storage_mapper("payment_token_id")]
+    fn payment_token_id(&self) -> SingleValueMapper<TokenIdentifier>; 
 
     #[view(getCancelTokenId)]
     #[storage_mapper("cancel_token_id")]
