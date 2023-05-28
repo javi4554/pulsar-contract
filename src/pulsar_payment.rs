@@ -23,6 +23,12 @@ pub trait PulsarPayment {
         self.fee().set(fee);
     }
 
+    #[endpoint(setFee)]
+    #[only_owner]
+    fn set_fee(&self, fee: u64) {
+        self.fee().set(fee);
+    }
+
     #[endpoint(create)]
     #[payable("*")]
     fn create(
