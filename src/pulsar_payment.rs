@@ -183,12 +183,11 @@ pub trait PulsarPayment {
         let current_date = self.blockchain().get_block_timestamp();
         let cancel_date = self.cancel_list(identifier).get();
 
-        if current_date <= release.start_date {
-            // if cancelled and start is in the future, no need to include it in the release list
-            if cancel_date > 0 {
-                return OptionalValue::None;
-            }
+        if cancel_date > 0 && cancel_date <= release.start_date {
+            return OptionalValue::None;
+        }
 
+        if current_date <= release.start_date {
             return OptionalValue::Some(release);
         }
 
