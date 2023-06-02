@@ -15,7 +15,7 @@
                 "sc:contract": {
                     "nonce": "0",
                     "balance": "997,998",
-                    "code": "file:../output/pulsar-payment-contract.wasm",
+                    "code": "file:../output/pulsar-contract.wasm",
                     "esdt": {
                         "str:ASTRAPAY-123456": {
                             "lastNonce": "1",

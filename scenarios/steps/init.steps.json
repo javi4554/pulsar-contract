@@ -51,7 +51,7 @@
             "id": "1",
             "tx": {
                 "from": "address:owner",
-                "contractCode": "file:../../output/pulsar-payment-contract.wasm",
+                "contractCode": "file:../../output/pulsar-contract.wasm",
                 "arguments": [
                     "str:ASTRAPAY-123456",
                     "str:ASTRACAN-123456",
@@ -92,7 +92,7 @@
                             ]
                         }
                     },
-                    "code": "file:../../output/pulsar-payment-contract.wasm",
+                    "code": "file:../../output/pulsar-contract.wasm",
                     "owner": "address:owner",
                     "storage": {
                         "str:payment_token_id": "str:ASTRAPAY-123456",
@@ -109,7 +109,7 @@
                 "sc:contract": {
                     "nonce": "0",
                     "balance": "0",
-                    "code": "file:../../output/pulsar-payment-contract.wasm",
+                    "code": "file:../../output/pulsar-contract.wasm",
                     "esdt": {
                         "str:ASTRAPAY-123456": {
                             "lastNonce": "0",
