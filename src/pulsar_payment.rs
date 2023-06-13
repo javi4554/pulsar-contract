@@ -13,6 +13,7 @@ use payment_type::PaymentType;
 use release::Release;
 
 const ONE_PAYMENT_TOKEN: u64 = 1_000u64;
+const MAX_FEE: u64 = 100u64;
 
 #[multiversx_sc::derive::contract]
 pub trait PulsarPayment {
@@ -20,12 +21,13 @@ pub trait PulsarPayment {
     fn init(&self, payment_token_id: TokenIdentifier, cancel_token_id: TokenIdentifier, fee: u64) {
         self.payment_token_id().set(&payment_token_id);
         self.cancel_token_id().set(&cancel_token_id);
-        self.fee().set(fee);
+        self.set_fee(fee);
     }
 
     #[endpoint(setFee)]
     #[only_owner]
     fn set_fee(&self, fee: u64) {
+        require!(fee <= MAX_FEE, "Fee out of range. Must be between 0 (no fee) and 100 (10%)" );
         self.fee().set(fee);
     }
 
