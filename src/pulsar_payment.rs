@@ -143,7 +143,7 @@ pub trait PulsarPayment {
     }
    
     fn claim_payment(&self, token: TokenIdentifier, nonce: u64, amount: BigUint) {
-        let payment = self.decode_token_attributes::<Payment<Self::Api>>(&token, nonce);
+        let payment = self.blockchain().get_token_attributes::<Payment<Self::Api>>(&token, nonce);
 
         let mut releases = ManagedVec::new();
 
@@ -244,7 +244,7 @@ pub trait PulsarPayment {
     }
 
     fn cancel_internal(&self, token: TokenIdentifier, nonce: u64, amount: BigUint) {
-        let cancellation = self.decode_token_attributes::<Cancellation<Self::Api>>(&token, nonce);
+        let cancellation = self.blockchain().get_token_attributes::<Cancellation<Self::Api>>(&token, nonce);
         let current_date = self.blockchain().get_block_timestamp();
 
         self.cancel_list(cancellation.payment_identifier).set(current_date); //vesting/payment
@@ -260,11 +260,6 @@ pub trait PulsarPayment {
         }
 
         self.send().esdt_local_burn(&token, nonce, &amount); 
-    }
-
-    fn decode_token_attributes<T: TopDecode>( &self, token_id: &TokenIdentifier, token_nonce: u64) -> T {
-        let token_info = self.blockchain().get_esdt_token_data( &self.blockchain().get_sc_address(), token_id, token_nonce);
-        self.serializer().top_decode_from_managed_buffer::<T>(&token_info.attributes)
     }
 
     fn create_and_send<T: TopEncode>(&self,
