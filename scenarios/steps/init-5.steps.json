@@ -52,14 +52,14 @@
 			"tx": {
 				"from": "address:owner",
 				"contractCode": "file:../../output/pulsar-contract.wasm",
-				"arguments": ["str:ASTRAPAY-123456", "str:ASTRACAN-123456", "-2"],
+				"arguments": ["str:TROJANNEBULAE", "str:ASTRACAN-123456", "0"],
 				"gasLimit": "20,000,000",
 				"gasPrice": "0"
 			},
 			"expect": {
 				"out": [],
 				"status": "4",
-				"message": "str:Fee out of range. Must be between 0 (no fee) and 100 (10%)!",
+				"message": "str:Wrong format for payment token id!",
 				"logs": "*",
 				"gas": "*",
 				"refund": "*"

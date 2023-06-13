@@ -19,6 +19,9 @@ const MAX_FEE: u64 = 100u64;
 pub trait PulsarPayment {
     #[init]
     fn init(&self, payment_token_id: TokenIdentifier, cancel_token_id: TokenIdentifier, fee: u64) {
+        require!(payment_token_id.is_valid_esdt_identifier(), "Wrong format for payment token id!");
+        require!(cancel_token_id.is_valid_esdt_identifier(), "Wrong format for cancel token id!");
+
         self.payment_token_id().set(&payment_token_id);
         self.cancel_token_id().set(&cancel_token_id);
         self.set_fee(fee);
@@ -27,7 +30,7 @@ pub trait PulsarPayment {
     #[endpoint(setFee)]
     #[only_owner]
     fn set_fee(&self, fee: u64) {
-        require!(fee <= MAX_FEE, "Fee out of range. Must be between 0 (no fee) and 100 (10%)" );
+        require!(fee <= MAX_FEE, "Fee out of range. Must be between 0 (no fee) and 100 (10%)!" );
         self.fee().set(fee);
     }
 
