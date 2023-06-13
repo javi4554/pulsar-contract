@@ -14,6 +14,7 @@ use release::Release;
 
 const ONE_PAYMENT_TOKEN: u64 = 1_000u64;
 const MAX_FEE: u64 = 100u64;
+const FEE_DENOMINATOR: u64 = 1_000u64;
 
 #[multiversx_sc::derive::contract]
 pub trait PulsarPayment {
@@ -63,7 +64,7 @@ pub trait PulsarPayment {
             require!(release_request.start_date >= self.blockchain().get_block_timestamp(), "Start date should not be in the past!");
             require!((release_request.end_date - release_request.start_date) % release_request.interval_seconds == 0, "Interval duration must be a multiple of the difference between end_date and start_date!");
 
-            let amount_post_tax = release_request.amount.clone() * (BigUint::from(1000u64 - self.fee().get())) / BigUint::from(1000u64);
+            let amount_post_tax = release_request.amount.clone() * (FEE_DENOMINATOR - self.fee().get()) / FEE_DENOMINATOR;
             let interval_seconds = BigUint::from(release_request.end_date - release_request.start_date);
             let amount_per_interval = amount_post_tax / interval_seconds.clone() / BigUint::from(receivers.len()) * release_request.interval_seconds;
 
