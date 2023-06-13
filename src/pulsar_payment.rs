@@ -61,7 +61,10 @@ pub trait PulsarPayment {
             let amount_post_tax = release_request.amount.clone() * (BigUint::from(1000u64 - self.fee().get())) / BigUint::from(1000u64);
             let interval_seconds = BigUint::from(release_request.end_date - release_request.start_date);
             let amount_per_interval = amount_post_tax / interval_seconds.clone() / BigUint::from(receivers.len()) * release_request.interval_seconds;
-            require!(amount_per_interval > 100000, "Minimum rate not reached. Please increase interval duration!");
+
+            if amount != 1u64 { // not is nft
+                require!(amount_per_interval > 100_000, "Minimum rate not reached. Please increase interval duration!");
+            }
 
             let amount_post_tax_calculated = amount_per_interval.clone() * interval_seconds * BigUint::from(receivers.len()) / release_request.interval_seconds;
             
@@ -271,6 +274,10 @@ pub trait PulsarPayment {
     }
 
     fn pay_egld_esdt(&self, token: EgldOrEsdtTokenIdentifier, nonce: u64, receiver: ManagedAddress, amount: BigUint) {
+        if amount == BigUint::from(0u32) {
+            return;
+        }
+        
         if token.is_egld() {
             self.send().direct_egld(&receiver, &amount);
         } else {
