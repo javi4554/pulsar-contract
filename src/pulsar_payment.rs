@@ -23,8 +23,8 @@ pub trait PulsarPayment {
         require!(payment_token_id.is_valid_esdt_identifier(), "Wrong format for payment token id!");
         require!(cancel_token_id.is_valid_esdt_identifier(), "Wrong format for cancel token id!");
 
-        self.payment_token_id().set(&payment_token_id);
-        self.cancel_token_id().set(&cancel_token_id);
+        self.payment_token_id().set_if_empty(&payment_token_id);
+        self.cancel_token_id().set_if_empty(&cancel_token_id);
         self.set_fee(fee);
     }
 
