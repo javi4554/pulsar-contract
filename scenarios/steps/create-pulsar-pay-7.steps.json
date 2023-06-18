@@ -20,6 +20,7 @@
                     "str:Hello World",
                     "0",
                     "address:acc2",
+                    "2",
                     "u64:100,000|u64:101,000|u64:1|biguint:1,000,000,000"
                 ],
                 "gasLimit": "20,000,000",

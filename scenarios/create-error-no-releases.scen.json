@@ -23,7 +23,8 @@
                     "0",
                     "str:Hello World",
                     "0",
-                    "address:acc2"
+                    "address:acc2",
+                    "2"
                 ],
                 "gasLimit": "20,000,000",
                 "gasPrice": "0"

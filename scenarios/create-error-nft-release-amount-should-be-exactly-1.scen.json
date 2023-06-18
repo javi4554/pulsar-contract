@@ -1,0 +1,42 @@
+{
+	"name": "create pulsar pay with 0 fee nft",
+	"steps": [
+		{
+			"step": "externalSteps",
+			"path": "steps/init-0-fee.steps.json"
+		},
+		{
+			"step": "scCall",
+			"id": "create-simple",
+			"tx": {
+				"from": "address:acc4",
+				"to": "sc:contract",
+				"esdtValue": [
+					{
+						"tokenIdentifier": "str:NFT-123456",
+						"nonce": "2",
+						"value": "1"
+					}
+				],
+				"function": "create",
+				"arguments": [
+					"0", 
+					"str:Hello World", 
+					"0", 
+					"address:acc2",
+					"0",
+					"u64:100,000|u64:100,001|u64:1|biguint:2"
+				],
+				"gasLimit": "20,000,000",
+				"gasPrice": "0"
+			},
+			"expect": {
+				"out": [],
+				"status": "4",
+				"message": "str:Release amount should be exactly 1!",
+				"gas": "*",
+				"refund": "*"
+			}
+		}
+	]
+}

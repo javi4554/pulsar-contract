@@ -19,7 +19,14 @@
 					}
 				],
 				"function": "create",
-				"arguments": ["0", "str:Hello World", "0", "address:acc2", "u64:100,000|u64:100,001|u64:1|biguint:1"],
+				"arguments": [
+					"0", 
+					"str:Hello World", 
+					"0", 
+					"address:acc2",
+					"0",
+					"u64:100,000|u64:100,001|u64:1|biguint:1"
+				],
 				"gasLimit": "20,000,000",
 				"gasPrice": "0"
 			},

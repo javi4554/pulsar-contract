@@ -43,6 +43,7 @@ pub trait PulsarPayment {
         name: ManagedBuffer,
         cancelable: bool,
         receivers: ManagedVec<ManagedAddress>,
+        fee: u64,
         releases: MultiValueEncoded<Release<Self::Api>>,
         #[payment_token] token: EgldOrEsdtTokenIdentifier, 
         #[payment_nonce] nonce: u64,
@@ -54,6 +55,7 @@ pub trait PulsarPayment {
 
         require!(!releases.is_empty(), "Minimum 1 release!");
         require!(!receivers.is_empty(), "Minimum 1 receiver!");
+        require!(fee == self.fee().get(), "Invalid fee!");
 
         let start_date = releases.clone().into_iter().map(|release| release.start_date).min().unwrap();
         let end_date = releases.clone().into_iter().map(|release| release.end_date).max().unwrap();
