@@ -2,35 +2,29 @@
 	"name": "deploy error: fee too high",
 	"steps": [
 		{
-			"step": "externalSteps",
-			"path": "steps/init-6.steps.json"
+				"step": "setState",
+				"accounts": {
+						"address:owner": {
+								"nonce": "0",
+								"balance": "0"
+						}
+				}
 		},
 		{
-			"step": "setState",
-			"currentBlockInfo": {
-				"blockTimestamp": "100,000"
-			}
-		},
-		{
-			"step": "scCall",
-			"id": "create-simple",
+			"step": "scDeploy",
+			"id": "1",
 			"tx": {
-				"from": "address:acc4",
-				"to": "sc:contract",
-				"esdtValue": [
-					{
-						"tokenIdentifier": "str:USDC-123456",
-						"value": "1,000,000,000"
-					}
-				],
-				"function": "cancel",
+				"from": "address:owner",
+				"contractCode": "file:../output/pulsar-contract.wasm",
+				"arguments": ["str:ASTRAPAY-123456", "str:TROJANNEBULAE", "0"],
 				"gasLimit": "20,000,000",
 				"gasPrice": "0"
 			},
 			"expect": {
 				"out": [],
 				"status": "4",
-				"message": "str:Invalid cancellation token!",
+				"message": "str:Wrong format for cancel token id!",
+				"logs": "*",
 				"gas": "*",
 				"refund": "*"
 			}

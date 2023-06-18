@@ -3,11 +3,33 @@
 	"steps": [
 		{
 			"step": "externalSteps",
-			"path": "steps/init-2.steps.json"
+			"path": "steps/init-0-fee.steps.json"
 		},
 		{
-			"step": "externalSteps",
-			"path": "steps/create-pulsar-pay-with-0-fee-nft.steps.json"
+			"step": "scCall",
+			"id": "create-simple",
+			"tx": {
+				"from": "address:acc4",
+				"to": "sc:contract",
+				"esdtValue": [
+					{
+						"tokenIdentifier": "str:NFT-123456",
+						"nonce": "2",
+						"value": "1"
+					}
+				],
+				"function": "create",
+				"arguments": ["0", "str:Hello World", "0", "address:acc2", "u64:100,000|u64:100,001|u64:1|biguint:1"],
+				"gasLimit": "20,000,000",
+				"gasPrice": "0"
+			},
+			"expect": {
+				"out": [],
+				"status": "0",
+				"message": "",
+				"gas": "*",
+				"refund": "*"
+			}
 		},
 		{
 			"step": "checkState",
@@ -17,6 +39,10 @@
 					"balance": "0",
 					"code": "file:../output/pulsar-contract.wasm",
 					"esdt": {
+						"str:NFT-123456": {
+							"balance": "1",
+							"nonce": "2"
+						},
 						"str:ASTRAPAY-123456": {
 							"lastNonce": "1",
 							"roles": ["ESDTRoleNFTCreate", "ESDTRoleNFTAddQuantity", "ESDTRoleNFTBurn"]
@@ -34,17 +60,7 @@
 					}
 				},
 				"address:owner": {
-					"nonce": "1",
-					"esdt": {
-						"str:IMPORTANT-NFT": {
-							"instances": [
-								{
-									"nonce": "0x2",
-									"balance": "0"
-								}
-							]
-						}
-					}
+					"nonce": "1"
 				},
 				"address:acc2": {
 					"nonce": "0",

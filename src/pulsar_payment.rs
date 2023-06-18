@@ -57,6 +57,7 @@ pub trait PulsarPayment {
 
         let start_date = releases.clone().into_iter().map(|release| release.start_date).min().unwrap();
         let end_date = releases.clone().into_iter().map(|release| release.end_date).max().unwrap();
+        let is_nft = nonce > 0u64 && amount == 1u64;
 
         for release_request in releases {
             require!(release_request.end_date > release_request.start_date, "End date should not be at an earlier point than start date!");
@@ -68,7 +69,10 @@ pub trait PulsarPayment {
             let interval_seconds = BigUint::from(release_request.end_date - release_request.start_date);
             let amount_per_interval = amount_post_tax / interval_seconds.clone() / BigUint::from(receivers.len()) * release_request.interval_seconds;
 
-            if amount != 1u64 { // not is nft
+            if is_nft {
+                require!(interval_seconds == 1u64, "Release total duration should be 1 second!");
+                require!(amount_per_interval == 1u64, "Release amount should be exactly 1!");
+            } else {
                 require!(amount_per_interval > 100_000, "Minimum rate not reached. Please increase interval duration!");
             }
 
@@ -89,7 +93,9 @@ pub trait PulsarPayment {
 
         let tax = amount - total_amount_post_tax.clone(); 
 
-        self.pay_egld_esdt(token.clone(), nonce, self.blockchain().get_owner_address(), tax);
+        if tax > 0u64 {
+            self.pay_egld_esdt(token.clone(), nonce, self.blockchain().get_owner_address(), tax);
+        }
 
         for receiver in &receivers {  
             let identifier = self.increment_last_id();
