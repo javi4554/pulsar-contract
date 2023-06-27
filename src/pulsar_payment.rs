@@ -116,7 +116,9 @@ pub trait PulsarPayment {
                 releases: payment_releases.clone(),
             };
 
-            self.create_and_send(self.payment_token_id().get(), BigUint::from(ONE_PAYMENT_TOKEN), payment, receiver);
+            let receiver_amount = if is_nft { BigUint::from(1u64) } else { BigUint::from(ONE_PAYMENT_TOKEN) };
+
+            self.create_and_send(self.payment_token_id().get(), receiver_amount, payment, receiver);
 
             if cancelable {
                 let cancellation = Cancellation { payment_identifier: identifier, release_token: token.clone(), release_nonce: nonce, releases: payment_releases.clone() };
@@ -182,7 +184,7 @@ pub trait PulsarPayment {
                 creator: payment.creator,
                 amount: payment.amount,
                 cancelable: payment.cancelable,
-                releases
+                releases,
             };
     
             self.create_and_send(self.payment_token_id().get(), amount, payment_attributes, self.blockchain().get_caller());
@@ -215,7 +217,10 @@ pub trait PulsarPayment {
             return OptionalValue::Some(release);
         }
 
-        let claimable_amount = amount * claimable_intervals * release.amount.clone() / BigUint::from(ONE_PAYMENT_TOKEN);
+        let is_nft = release.amount == BigUint::from(1u64) && (release.end_date - release.start_date == 1u64) && release.interval_seconds == 1u64;
+        let divider = if is_nft { BigUint::from(1u64) } else { BigUint::from(ONE_PAYMENT_TOKEN) };
+
+        let claimable_amount = amount * claimable_intervals * release.amount.clone() / divider;
 
         self.pay_egld_esdt(payment_token, payment_nonce, self.blockchain().get_caller(), claimable_amount);
     
