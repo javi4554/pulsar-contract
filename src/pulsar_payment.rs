@@ -59,7 +59,6 @@ pub trait PulsarPayment {
 
         let start_date = releases.clone().into_iter().map(|release| release.start_date).min().unwrap();
         let end_date = releases.clone().into_iter().map(|release| release.end_date).max().unwrap();
-        let is_nft = nonce > 0u64 && amount == 1u64;
 
         for release_request in releases {
             require!(release_request.end_date > release_request.start_date, "End date should not be at an earlier point than start date!");
@@ -71,12 +70,7 @@ pub trait PulsarPayment {
             let interval_seconds = BigUint::from(release_request.end_date - release_request.start_date);
             let amount_per_interval = amount_post_tax / interval_seconds.clone() / BigUint::from(receivers.len()) * release_request.interval_seconds;
 
-            if is_nft {
-                require!(interval_seconds == 1u64, "Release total duration should be 1 second!");
-                require!(amount_per_interval == 1u64, "Release amount should be exactly 1!");
-            } else {
-                require!(amount_per_interval > 100_000, "Minimum rate not reached. Please increase interval duration!");
-            }
+            require!(amount_per_interval > 100_000, "Minimum rate not reached. Please increase interval duration!");
 
             let amount_post_tax_calculated = amount_per_interval.clone() * interval_seconds * BigUint::from(receivers.len()) / release_request.interval_seconds;
             
@@ -116,9 +110,7 @@ pub trait PulsarPayment {
                 releases: payment_releases.clone(),
             };
 
-            let receiver_amount = if is_nft { BigUint::from(1u64) } else { BigUint::from(ONE_PAYMENT_TOKEN) };
-
-            self.create_and_send(self.payment_token_id().get(), receiver_amount, payment, receiver);
+            self.create_and_send(self.payment_token_id().get(), BigUint::from(ONE_PAYMENT_TOKEN), payment, receiver);
 
             if cancelable {
                 let cancellation = Cancellation { payment_identifier: identifier, release_token: token.clone(), release_nonce: nonce, releases: payment_releases.clone() };
@@ -217,10 +209,7 @@ pub trait PulsarPayment {
             return OptionalValue::Some(release);
         }
 
-        let is_nft = release.amount == BigUint::from(1u64) && (release.end_date - release.start_date == 1u64) && release.interval_seconds == 1u64;
-        let divider = if is_nft { BigUint::from(1u64) } else { BigUint::from(ONE_PAYMENT_TOKEN) };
-
-        let claimable_amount = amount * claimable_intervals * release.amount.clone() / divider;
+        let claimable_amount = amount * claimable_intervals * release.amount.clone() / BigUint::from(ONE_PAYMENT_TOKEN);
 
         self.pay_egld_esdt(payment_token, payment_nonce, self.blockchain().get_caller(), claimable_amount);
     
