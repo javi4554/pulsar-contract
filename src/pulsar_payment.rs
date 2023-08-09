@@ -87,8 +87,8 @@ pub trait PulsarPayment {
 
         require!(amount == total_amount, "Total release amount does not match transaction amount!");
 
-        let tax = amount - total_amount_post_tax.clone(); 
-
+        let tax = amount.clone() - total_amount_post_tax.clone(); 
+        require!(BigUint::from(tax.clone()) <= BigUint::from(fee) * amount, "Tax exceeds maximum fee!");
         if tax > 0u64 {
             self.pay_egld_esdt(token.clone(), nonce, self.blockchain().get_owner_address(), tax);
         }
