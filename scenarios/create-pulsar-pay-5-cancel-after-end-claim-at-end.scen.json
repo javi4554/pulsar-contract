@@ -106,12 +106,12 @@
                 },
                 "address:acc1": {
                     "nonce": "2",
-                    "balance": "9,000,000,000",
+                    "balance": "8,998,000,000",
                     "storage": {}
                 },
                 "address:acc2": {
                     "nonce": "1",
-                    "balance": "10,998,000,000",
+                    "balance": "11,000,000,000",
                     "storage": {}
                 },
                 "+": ""

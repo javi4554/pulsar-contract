@@ -7,14 +7,13 @@
             "tx": {
                 "from": "address:acc1",
                 "to": "sc:contract",
-                "egldValue": "1,000,000,000",
+                "egldValue": "1,002,000,000",
                 "function": "create",
                 "arguments": [
                     "0",
                     "str:Hello World",
                     "0",
                     "address:acc2",
-                    "2",
                     "u64:100,001|u64:101,001|u64:500|biguint:1,000,000,000"
                 ],
                 "gasLimit": "20,000,000",

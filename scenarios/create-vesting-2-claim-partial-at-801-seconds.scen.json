@@ -92,7 +92,7 @@
                             ]
                         },
                         "str:USDC-123456": {
-                            "balance": "1,652,688,000"
+                            "balance": "1,656,000,000"
                         }
                     },
                     "storage": {
@@ -116,7 +116,7 @@
                     "storage": {},
                     "esdt": {
                         "str:USDC-123456": {
-                            "balance": "670,656,000"
+                            "balance": "672,000,000"
                         },
                         "str:ASTRAPAY-123456": {
                             "instances": [
@@ -138,7 +138,7 @@
                     "storage": {},
                     "esdt": {
                         "str:USDC-123456": {
-                            "balance": "670,656,000"
+                            "balance": "672,000,000"
                         },
                         "str:ASTRAPAY-123456": {
                             "instances": [
@@ -160,7 +160,7 @@
                     "storage": {},
                     "esdt": {
                         "str:USDC-123456": {
-                            "balance": "7,000,000,000"
+                            "balance": "6,994,000,000"
                         },
                         "str:ASTRACAN-123456": {
                             "instances": [

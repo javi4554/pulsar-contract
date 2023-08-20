@@ -17,15 +17,15 @@
             "tx": {
                 "from": "address:acc1",
                 "to": "sc:contract",
-                "egldValue": "1,000,000",
+                "egldValue": "1,500,000,000",
                 "function": "create",
                 "arguments": [
                     "0",
                     "str:Hello World",
                     "0",
                     "address:acc2",
-                    "1",
-                    "u64:100,000|u64:100,001|u64:1|biguint:1,000,000"
+                    "u64:100,000|u64:101,000|u64:1|biguint:1,000,000,000",
+                    "u64:101,000|u64:102,000|u64:1|biguint:500,000,001"
                 ],
                 "gasLimit": "20,000,000",
                 "gasPrice": "0"
@@ -33,7 +33,7 @@
             "expect": {
                 "out": [],
                 "status": "4",
-                "message": "str:Invalid fee!",
+                "message": "str:Release amount is not calculated correctly",
                 "gas": "*",
                 "refund": "*"
             }

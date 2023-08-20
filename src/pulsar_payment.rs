@@ -43,19 +43,18 @@ pub trait PulsarPayment {
         name: ManagedBuffer,
         cancelable: bool,
         receivers: ManagedVec<ManagedAddress>,
-        fee: u64,
         releases: MultiValueEncoded<Release<Self::Api>>,
         #[payment_token] token: EgldOrEsdtTokenIdentifier, 
         #[payment_nonce] nonce: u64,
         #[payment_amount] amount: BigUint,
     ) {
         let mut payment_releases = ManagedVec::new();
+        let mut total_amount_including_tax = BigUint::zero();
         let mut total_amount = BigUint::zero();
-        let mut total_amount_post_tax = BigUint::zero();
+        let mut total_tax = BigUint::zero();
 
         require!(!releases.is_empty(), "Minimum 1 release!");
         require!(!receivers.is_empty(), "Minimum 1 receiver!");
-        require!(fee == self.fee().get(), "Invalid fee!");
 
         let start_date = releases.clone().into_iter().map(|release| release.start_date).min().unwrap();
         let end_date = releases.clone().into_iter().map(|release| release.end_date).max().unwrap();
@@ -66,16 +65,19 @@ pub trait PulsarPayment {
             require!(release_request.start_date >= self.blockchain().get_block_timestamp(), "Start date should not be in the past!");
             require!((release_request.end_date - release_request.start_date) % release_request.interval_seconds == 0, "Interval duration must be a multiple of the difference between end_date and start_date!");
 
-            let amount_post_tax = release_request.amount.clone() * (FEE_DENOMINATOR - self.fee().get()) / FEE_DENOMINATOR;
+            let tax = release_request.amount.clone() * self.fee().get() / FEE_DENOMINATOR;
             let interval_seconds = BigUint::from(release_request.end_date - release_request.start_date);
-            let amount_per_interval = amount_post_tax * release_request.interval_seconds / interval_seconds.clone() / BigUint::from(receivers.len());
+            let amount_per_interval = release_request.amount.clone() * release_request.interval_seconds / interval_seconds.clone() / BigUint::from(receivers.len());
 
             require!(amount_per_interval > 100_000, "Minimum rate not reached. Please increase interval duration!");
 
-            let amount_post_tax_calculated = amount_per_interval.clone() * interval_seconds * BigUint::from(receivers.len()) / release_request.interval_seconds;
-            
+            let amount_recalculated = amount_per_interval.clone() * interval_seconds * BigUint::from(receivers.len()) / release_request.interval_seconds;
+
             total_amount += release_request.amount.clone();
-            total_amount_post_tax += amount_post_tax_calculated.clone();
+            total_tax += tax.clone();
+            total_amount_including_tax += release_request.amount.clone() + tax.clone();
+
+            require!(amount_recalculated == release_request.amount.clone(), "Release amount is not calculated correctly");
 
             payment_releases.push(Release {
                 amount: amount_per_interval.clone(),
@@ -85,12 +87,10 @@ pub trait PulsarPayment {
             });
         }
 
-        require!(amount == total_amount, "Total release amount does not match transaction amount!");
+        require!(amount == total_amount_including_tax, "Total release amount does not match transaction amount!");
 
-        let tax = amount.clone() - total_amount_post_tax.clone(); 
-        require!(BigUint::from(tax.clone()) <= BigUint::from(fee) * amount, "Tax exceeds maximum fee!");
-        if tax > 0u64 {
-            self.pay_egld_esdt(token.clone(), nonce, self.blockchain().get_owner_address(), tax);
+        if total_tax > 0u64 {
+            self.pay_egld_esdt(token.clone(), nonce, self.blockchain().get_owner_address(), total_tax);
         }
 
         for receiver in &receivers {  
@@ -105,7 +105,7 @@ pub trait PulsarPayment {
                 release_token: token.clone(), 
                 release_nonce: nonce,
                 creator: self.blockchain().get_caller().clone(),
-                amount: total_amount_post_tax.clone(),
+                amount: total_amount.clone(),
                 cancelable,
                 releases: payment_releases.clone(),
             };

@@ -93,7 +93,7 @@
                         },
                         "str:LKMEX-123456": {
                             "nonce": "999",
-                            "balance": "1,317,360,000"
+                            "balance": "1,320,000,000"
                         }
                     },
                     "storage": {
@@ -119,7 +119,7 @@
                     "esdt": {
                         "str:LKMEX-123456": {
                             "nonce": "999",
-                            "balance": "838,320,000"
+                            "balance": "840,000,000"
                         },
                         "str:ASTRAPAY-123456": {
                             "nonce": "3",
@@ -134,7 +134,7 @@
                     "esdt": {
                         "str:LKMEX-123456": {
                             "nonce": "999",
-                            "balance": "838,320,000"
+                            "balance": "840,000,000"
                         },
                         "str:ASTRAPAY-123456": {
                             "nonce": "4",
@@ -149,7 +149,7 @@
                     "esdt": {
                         "str:LKMEX-123456": {
                             "nonce": "999",
-                            "balance": "7,000,000,000"
+                            "balance": "6,994,000,000"
                         },
                         "str:ASTRACAN-123456": {
                             "instances": [

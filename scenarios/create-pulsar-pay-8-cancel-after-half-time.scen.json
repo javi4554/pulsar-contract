@@ -46,7 +46,7 @@
             "accounts": {
                 "sc:contract": {
                     "nonce": "0",
-                    "balance": "499,000,000",
+                    "balance": "500,000,000",
                     "code": "file:../output/pulsar-contract.wasm",
                     "esdt": {
                         "str:ASTRAPAY-123456": {
@@ -80,7 +80,7 @@
                 },
                 "address:acc1": {
                     "nonce": "2",
-                    "balance": "9,499,000,000",
+                    "balance": "9,498,000,000",
                     "storage": {}
                 },
                 "address:acc2": {

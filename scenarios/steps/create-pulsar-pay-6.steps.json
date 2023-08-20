@@ -10,7 +10,7 @@
                 "esdtValue": [
                     {
                         "tokenIdentifier": "str:USDC-123456",
-                        "value": "200,000,000"
+                        "value": "200,400,000"
                     }
                 ],
                 "function": "create",
@@ -19,7 +19,6 @@
                     "str:Hello World",
                     "0",
                     "address:acc2",
-                    "2",
                     "u64:100,000|u64:101,000|u64:1|biguint:200,000,000"
                 ],
                 "gasLimit": "20,000,000",

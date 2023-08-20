@@ -130,7 +130,7 @@
             "accounts": {
                 "sc:contract": {
                     "nonce": "0",
-                    "balance": "1,561,870,000",
+                    "balance": "1,565,000,000",
                     "code": "file:../output/pulsar-contract.wasm",
                     "esdt": {
                         "str:ASTRAPAY-123456": {
@@ -163,7 +163,7 @@
                 },
                 "address:acc1": {
                     "nonce": "1",
-                    "balance": "7,000,000,000",
+                    "balance": "6,994,000,000",
                     "storage": {},
                     "esdt": {
                         "str:ASTRACAN-123456": {
@@ -182,7 +182,7 @@
                 },
                 "address:acc2": {
                     "nonce": "2",
-                    "balance": "10,722,552,000",
+                    "balance": "10,724,000,000",
                     "storage": {},
                     "esdt": {
                         "str:ASTRAPAY-123456": {
@@ -205,7 +205,7 @@
                 },
                 "address:acc3": {
                     "nonce": "2",
-                    "balance": "10,709,578,000",
+                    "balance": "10,711,000,000",
                     "storage": {},
                     "esdt": {
                         "str:ASTRAPAY-123456": {
