@@ -275,7 +275,7 @@ pub trait PulsarPayment {
     }
 
     fn pay_egld_esdt(&self, token: EgldOrEsdtTokenIdentifier, nonce: u64, receiver: ManagedAddress, amount: BigUint) {
-        if amount == BigUint::from(0u32) {
+        if amount == 0u32 {
             return;
         }
         
