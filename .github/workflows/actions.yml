@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  checks: write
+  contents: write
+  id-token: write
+  issues: write
+  discussions: write
+  pull-requests: write
+  statuses: write
+
+
+jobs:
+  contracts:
+    name: Contracts
+    uses: ./.github/workflows/contracts.yml
+    with:
+      rust-toolchain: nightly-2023-02-02
+      vmtools-version: v1.4.60
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
