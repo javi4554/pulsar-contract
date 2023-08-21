@@ -69,8 +69,6 @@ pub trait PulsarPayment {
             let interval_seconds = BigUint::from(release_request.end_date - release_request.start_date);
             let amount_per_interval = release_request.amount.clone() * release_request.interval_seconds / interval_seconds.clone() / BigUint::from(receivers.len());
 
-            require!(amount_per_interval > 100_000, "Minimum rate not reached. Please increase interval duration!");
-
             let amount_recalculated = amount_per_interval.clone() * interval_seconds * BigUint::from(receivers.len()) / release_request.interval_seconds;
 
             total_amount += release_request.amount.clone();
