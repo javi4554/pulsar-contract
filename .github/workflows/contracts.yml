@@ -1,0 +1,186 @@
+name: Contracts builds and tests
+
+on:
+  workflow_call:
+    inputs:
+      rust-toolchain:
+        description: 'Rust toolchain to use'
+        default: 'nightly'
+        required: false
+        type: string
+      vmtools-version:
+        description: 'vmtools version to use'
+        default: 'latest'
+        required: false
+        type: string
+      pip-mxpy-args:
+        description: 'pip mxpy install arguments'
+        default: 'multiversx-sdk-cli==v6.0.0'
+        required: false
+        type: string
+      clippy-args:
+        description: 'cargo clippy arguments'
+        default: '--all-targets --all-features'
+        required: false
+        type: string
+      install-libtinfo5:
+        description: 'install libtinfo5'
+        default: false
+        required: false
+        type: boolean
+    secrets:
+      token:
+        description: 'Github token'
+        required: true
+
+jobs:
+  wasm_test:
+    name: Wasm tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: ${{ inputs.rust-toolchain }}
+          target: wasm32-unknown-unknown
+
+      - name: Setup the PATH variable
+        run: echo "PATH=$HOME/.local/bin:$HOME/multiversx-sdk/vmtools:$PATH" >> $GITHUB_ENV
+
+      - name: Install prerequisites
+        run: |
+          pip3 install ${{ inputs.pip-mxpy-args }}
+          mkdir $HOME/multiversx-sdk
+          python3 -m multiversx_sdk_cli.cli deps install vmtools --tag ${{ inputs.vmtools-version }}
+          sudo apt install -y binaryen=105-1
+          sudo apt install -y wabt=1.0.27-1
+
+          cargo install twiggy
+
+          cargo install multiversx-sc-meta
+
+      - name: Install libtinfo5
+        if: inputs.install-libtinfo5
+        run: |
+          sudo apt update
+          sudo apt install -y libtinfo5
+
+      - name: Build the wasm contracts
+        env:
+          RUSTFLAGS: ""
+        run: sc-meta all build --no-imports --target-dir $(pwd)/target --path .
+
+      - name: Run the wasm tests
+        env:
+          RUSTFLAGS: ""
+        run:
+          cargo test --features multiversx-sc-scenario/run-go-tests
+
+      - name: Run the scenario tests
+        env:
+          RUSTFLAGS: ""
+        run: $HOME/multiversx-sdk/vmtools/run-scenarios scenarios
+
+      - name: Generate the contract report
+        env:
+          RUSTFLAGS: ""
+        run: |
+          sc-meta all build-dbg --twiggy-paths --target-dir $(pwd)/target --path .
+          python3 -m multiversx_sdk_cli.cli contract report --skip-build --skip-twiggy --output-format json --output-file report.json
+
+      - name: Upload the report json
+        uses: actions/upload-artifact@v3
+        with:
+          name: report
+          path: report.json
+
+      - name: Download the base report
+        uses: dawidd6/action-download-artifact@v2
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        with:
+          workflow: actions.yml
+          name: report
+          commit: ${{ github.event.pull_request.base.sha }}
+          path: base-report
+
+      - name: Generate the report template
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Contract comparison - from {{ .base }} to {{ .head }}" > report.md
+          if [ ! -f base-report/report.json ]
+          then
+              echo ":warning: Warning: Could not download the report for the base branch. Displaying only the report for the current branch. :warning:" >> report.md
+              python3 -m multiversx_sdk_cli.cli contract report --compare report.json --output-format github-markdown --output-file report-table.md
+          else
+              python3 -m multiversx_sdk_cli.cli contract report --compare base-report/report.json report.json --output-format github-markdown --output-file report-table.md
+          fi
+          cat report-table.md >> report.md
+
+      - name: Render the report from the template
+        id: template
+        uses: chuhlomin/render-template@v1
+        if: github.event_name == 'pull_request'
+        with:
+          template: report.md
+          vars: |
+            base: ${{ github.event.pull_request.base.sha }}
+            head: ${{ github.event.pull_request.head.sha }}
+
+      - name: Upload the report markdown
+        uses: actions/upload-artifact@v3
+        if: github.event_name == 'pull_request'
+        with:
+          name: report-markdown
+          path: report.md
+
+      - name: Find the comment containing the report
+        id: fc
+        uses: peter-evans/find-comment@v2
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 'Contract comparison'
+
+      - name: Create or update the report comment
+        uses: peter-evans/create-or-update-comment@v2
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ steps.template.outputs.result }}
+          edit-mode: replace
+
+  rust_test:
+    name: Rust tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: ${{ inputs.rust-toolchain }}
+
+      - name: Run the rust tests
+        env:
+          RUSTFLAGS: ""
+        run:
+          cargo test
+
+  clippy_check:
+    name: Clippy linter check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: ${{ inputs.rust-toolchain }}
+          components: clippy
+      - uses: giraffate/clippy-action@v1
+        env:
+          RUSTFLAGS: ""
+        with:
+          github_token: ${{ secrets.token }}
+          clippy_flags: ${{ inputs.clippy-args }}
