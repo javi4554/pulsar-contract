@@ -10,7 +10,7 @@
                 "esdtValue": [
                     {
                         "tokenIdentifier": "str:USDC-123456",
-                        "value": "1,000,000"
+                        "value": "1,002,000"
                     }
                 ],
                 "function": "create",

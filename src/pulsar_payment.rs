@@ -13,19 +13,25 @@ use payment_type::PaymentType;
 use release::Release;
 
 const ONE_PAYMENT_TOKEN: u64 = 1_000u64;
+const MAX_FEE: u64 = 100u64;
+const FEE_DENOMINATOR: u64 = 1_000u64;
 
 #[multiversx_sc::derive::contract]
 pub trait PulsarPayment {
     #[init]
     fn init(&self, payment_token_id: TokenIdentifier, cancel_token_id: TokenIdentifier, fee: u64) {
-        self.payment_token_id().set(&payment_token_id);
-        self.cancel_token_id().set(&cancel_token_id);
-        self.fee().set(fee);
+        require!(payment_token_id.is_valid_esdt_identifier(), "Wrong format for payment token id!");
+        require!(cancel_token_id.is_valid_esdt_identifier(), "Wrong format for cancel token id!");
+
+        self.payment_token_id().set_if_empty(&payment_token_id);
+        self.cancel_token_id().set_if_empty(&cancel_token_id);
+        self.set_fee(fee);
     }
 
     #[endpoint(setFee)]
     #[only_owner]
     fn set_fee(&self, fee: u64) {
+        require!(fee <= MAX_FEE, "Fee out of range. Must be between 0 (no fee) and 100 (10%)!" );
         self.fee().set(fee);
     }
 
@@ -43,8 +49,9 @@ pub trait PulsarPayment {
         #[payment_amount] amount: BigUint,
     ) {
         let mut payment_releases = ManagedVec::new();
+        let mut total_amount_including_tax = BigUint::zero();
         let mut total_amount = BigUint::zero();
-        let mut total_amount_post_tax = BigUint::zero();
+        let mut total_tax = BigUint::zero();
 
         require!(!releases.is_empty(), "Minimum 1 release!");
         require!(!receivers.is_empty(), "Minimum 1 receiver!");
@@ -58,15 +65,19 @@ pub trait PulsarPayment {
             require!(release_request.start_date >= self.blockchain().get_block_timestamp(), "Start date should not be in the past!");
             require!((release_request.end_date - release_request.start_date) % release_request.interval_seconds == 0, "Interval duration must be a multiple of the difference between end_date and start_date!");
 
-            let amount_post_tax = release_request.amount.clone() * (BigUint::from(1000u64 - self.fee().get())) / BigUint::from(1000u64);
+            let tax = release_request.amount.clone() * self.fee().get() / FEE_DENOMINATOR;
             let interval_seconds = BigUint::from(release_request.end_date - release_request.start_date);
-            let amount_per_interval = amount_post_tax / interval_seconds.clone() / BigUint::from(receivers.len()) * release_request.interval_seconds;
-            require!(amount_per_interval > 100000, "Minimum rate not reached. Please increase interval duration!");
+            let amount_per_interval = release_request.amount.clone() * release_request.interval_seconds / interval_seconds.clone() / BigUint::from(receivers.len());
 
-            let amount_post_tax_calculated = amount_per_interval.clone() * interval_seconds * BigUint::from(receivers.len()) / release_request.interval_seconds;
-            
+            require!(amount_per_interval.clone() % ONE_PAYMENT_TOKEN == 0, "Amount per interval must be divisible to 1000");
+
+            let amount_recalculated = amount_per_interval.clone() * interval_seconds * BigUint::from(receivers.len()) / release_request.interval_seconds;
+
             total_amount += release_request.amount.clone();
-            total_amount_post_tax += amount_post_tax_calculated.clone();
+            total_tax += tax.clone();
+            total_amount_including_tax += release_request.amount.clone() + tax.clone();
+
+            require!(amount_recalculated == release_request.amount.clone(), "Release amount is not calculated correctly");
 
             payment_releases.push(Release {
                 amount: amount_per_interval.clone(),
@@ -76,11 +87,11 @@ pub trait PulsarPayment {
             });
         }
 
-        require!(amount == total_amount, "Total release amount does not match transaction amount!");
+        require!(amount == total_amount_including_tax, "Total release amount does not match transaction amount!");
 
-        let tax = amount - total_amount_post_tax.clone(); 
-
-        self.pay_egld_esdt(token.clone(), nonce, self.blockchain().get_owner_address(), tax);
+        if total_tax > 0u64 {
+            self.pay_egld_esdt(token.clone(), nonce, self.blockchain().get_owner_address(), total_tax);
+        }
 
         for receiver in &receivers {  
             let identifier = self.increment_last_id();
@@ -94,7 +105,7 @@ pub trait PulsarPayment {
                 release_token: token.clone(), 
                 release_nonce: nonce,
                 creator: self.blockchain().get_caller().clone(),
-                amount: total_amount_post_tax.clone(),
+                amount: total_amount.clone(),
                 cancelable,
                 releases: payment_releases.clone(),
             };
@@ -135,7 +146,7 @@ pub trait PulsarPayment {
     }
    
     fn claim_payment(&self, token: TokenIdentifier, nonce: u64, amount: BigUint) {
-        let payment = self.decode_token_attributes::<Payment<Self::Api>>(&token, nonce);
+        let payment = self.blockchain().get_token_attributes::<Payment<Self::Api>>(&token, nonce);
 
         let mut releases = ManagedVec::new();
 
@@ -165,7 +176,7 @@ pub trait PulsarPayment {
                 creator: payment.creator,
                 amount: payment.amount,
                 cancelable: payment.cancelable,
-                releases
+                releases,
             };
     
             self.create_and_send(self.payment_token_id().get(), amount, payment_attributes, self.blockchain().get_caller());
@@ -236,7 +247,7 @@ pub trait PulsarPayment {
     }
 
     fn cancel_internal(&self, token: TokenIdentifier, nonce: u64, amount: BigUint) {
-        let cancellation = self.decode_token_attributes::<Cancellation<Self::Api>>(&token, nonce);
+        let cancellation = self.blockchain().get_token_attributes::<Cancellation<Self::Api>>(&token, nonce);
         let current_date = self.blockchain().get_block_timestamp();
 
         self.cancel_list(cancellation.payment_identifier).set(current_date); //vesting/payment
@@ -254,11 +265,6 @@ pub trait PulsarPayment {
         self.send().esdt_local_burn(&token, nonce, &amount); 
     }
 
-    fn decode_token_attributes<T: TopDecode>( &self, token_id: &TokenIdentifier, token_nonce: u64) -> T {
-        let token_info = self.blockchain().get_esdt_token_data( &self.blockchain().get_sc_address(), token_id, token_nonce);
-        self.serializer().top_decode_from_managed_buffer::<T>(&token_info.attributes)
-    }
-
     fn create_and_send<T: TopEncode>(&self,
         token_id: TokenIdentifier,
         amount: BigUint,
@@ -271,6 +277,10 @@ pub trait PulsarPayment {
     }
 
     fn pay_egld_esdt(&self, token: EgldOrEsdtTokenIdentifier, nonce: u64, receiver: ManagedAddress, amount: BigUint) {
+        if amount == 0u32 {
+            return;
+        }
+        
         if token.is_egld() {
             self.send().direct_egld(&receiver, &amount);
         } else {

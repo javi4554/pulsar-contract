@@ -105,7 +105,7 @@
                 },
                 "address:acc1": {
                     "nonce": "1",
-                    "balance": "7,000,000,000",
+                    "balance": "6,994,000,000",
                     "storage": {},
                     "esdt": {
                         "str:ASTRACAN-123456": {
@@ -124,12 +124,12 @@
                 },
                 "address:acc2": {
                     "nonce": "1",
-                    "balance": "11,497,000,000",
+                    "balance": "11,500,000,000",
                     "storage": {}
                 },
                 "address:acc3": {
                     "nonce": "1",
-                    "balance": "11,497,000,000",
+                    "balance": "11,500,000,000",
                     "storage": {}
                 },
                 "+": ""

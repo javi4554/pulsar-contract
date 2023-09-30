@@ -1,0 +1,132 @@
+{
+	"name": "init-fee-0",
+	"steps": [
+		{
+			"step": "setState",
+			"accounts": {
+				"address:owner": {
+					"nonce": "0",
+					"balance": "0"
+				},
+				"address:acc1": {
+					"nonce": "0",
+					"balance": "10,000,000,000"
+				},
+				"address:acc2": {
+					"nonce": "0",
+					"balance": "10,000,000,000"
+				},
+				"address:acc3": {
+					"nonce": "0",
+					"balance": "10,000,000,000"
+				},
+				"address:acc4": {
+					"nonce": "0",
+					"balance": "10,000,000,000",
+					"esdt": {
+						"str:USDC-123456": "10,000,000,000",
+						"str:NFT-123456": {
+							"nonce": "2",
+							"balance": "10"
+						}
+					}
+				},
+				"address:acc5": {
+					"nonce": "0",
+					"balance": "10,000,000,000",
+					"esdt": {
+						"str:LKMEX-123456": {
+							"nonce": "999",
+							"balance": "10,000,000,000"
+						}
+					}
+				}
+			},
+			"newAddresses": [
+				{
+					"creatorAddress": "address:owner",
+					"creatorNonce": "0",
+					"newAddress": "sc:contract"
+				}
+			]
+		},
+		{
+			"step": "scDeploy",
+			"id": "1",
+			"tx": {
+				"from": "address:owner",
+				"contractCode": "file:../../output/pulsar-contract.wasm",
+				"arguments": ["str:ASTRAPAY-123456", "str:ASTRACAN-123456", "0"],
+				"gasLimit": "20,000,000",
+				"gasPrice": "0"
+			},
+			"expect": {
+				"out": [],
+				"status": "",
+				"logs": "*",
+				"gas": "*",
+				"refund": "*"
+			}
+		},
+		{
+			"step": "setState",
+			"accounts": {
+				"sc:contract": {
+					"nonce": "0",
+					"balance": "0",
+					"esdt": {
+						"str:ASTRAPAY-123456": {
+							"lastNonce": "0",
+							"roles": ["ESDTRoleNFTCreate", "ESDTRoleNFTAddQuantity", "ESDTRoleNFTBurn"]
+						},
+						"str:ASTRACAN-123456": {
+							"lastNonce": "0",
+							"roles": ["ESDTRoleNFTCreate", "ESDTRoleNFTAddQuantity", "ESDTRoleNFTBurn"]
+						}
+					},
+					"code": "file:../../output/pulsar-contract.wasm",
+					"owner": "address:owner",
+					"storage": {
+						"str:payment_token_id": "str:ASTRAPAY-123456",
+						"str:cancel_token_id": "str:ASTRACAN-123456",
+						"str:fee": "0",
+						"str:last_id": "100"
+					}
+				}
+			}
+		},
+		{
+			"step": "checkState",
+			"accounts": {
+				"sc:contract": {
+					"nonce": "0",
+					"balance": "0",
+					"code": "file:../../output/pulsar-contract.wasm",
+					"esdt": {
+						"str:ASTRAPAY-123456": {
+							"lastNonce": "0",
+							"roles": ["ESDTRoleNFTCreate", "ESDTRoleNFTAddQuantity", "ESDTRoleNFTBurn"]
+						},
+						"str:ASTRACAN-123456": {
+							"lastNonce": "0",
+							"roles": ["ESDTRoleNFTCreate", "ESDTRoleNFTAddQuantity", "ESDTRoleNFTBurn"]
+						}
+					},
+					"storage": {
+						"str:payment_token_id": "str:ASTRAPAY-123456",
+						"str:cancel_token_id": "str:ASTRACAN-123456",
+						"str:fee": "0",
+						"str:last_id": "100"
+					}
+				},
+				"+": ""
+			}
+		},
+		{
+			"step": "setState",
+			"currentBlockInfo": {
+				"blockTimestamp": "100,000"
+			}
+		}
+	]
+}

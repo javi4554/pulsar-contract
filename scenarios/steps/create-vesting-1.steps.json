@@ -7,7 +7,7 @@
             "tx": {
                 "from": "address:acc1",
                 "to": "sc:contract",
-                "egldValue": "3,000,000,000",
+                "egldValue": "3,006,000,000",
                 "function": "create",
                 "arguments": [
                     "2",
